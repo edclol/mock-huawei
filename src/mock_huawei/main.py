@@ -118,7 +118,8 @@ def oauth_token():
             "expires_in": 3600,
             "refresh_token": f"mock_refresh_token_{uuid.uuid4().hex[:16]}",
             "scope": "openid profile email",
-            "token_type": "Bearer"
+            "token_type": "Bearer",
+            "id_token": f"mock_id_token_{uuid.uuid4().hex[:16]}"
         }), 200
 
     elif grant_type == "refresh_token":
@@ -130,7 +131,8 @@ def oauth_token():
             "expires_in": 3600,
             "refresh_token": f"mock_refresh_token_{uuid.uuid4().hex[:16]}",
             "scope": "openid profile email",
-            "token_type": "Bearer"
+            "token_type": "Bearer",
+            "id_token": f"mock_id_token_{uuid.uuid4().hex[:16]}"
         }), 200
 
     else:
