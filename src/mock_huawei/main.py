@@ -7,9 +7,72 @@ from flask import Flask, request, jsonify
 import time
 import uuid
 import random
+import logging
+import time
+import uuid
+from flask import g
+import logging
+import time
+import uuid
+from flask import g
+
+
 import base64
 app = Flask(__name__)
 
+
+
+
+# ========== 日志配置 ==========
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("healthkit_mock")
+
+
+@app.before_request
+def log_request():
+    """请求进入时记录完整入参"""
+    g.request_id = str(uuid.uuid4())[:8]
+    g.start_time = time.time()
+
+    # 1. 记录请求方法与路径
+    logger.info("[%s] >>> %s %s", g.request_id, request.method, request.path)
+
+    # 2. 记录完整请求头
+    headers_dict = dict(request.headers)
+    logger.info("[%s] Request Headers: %s", g.request_id, headers_dict)
+
+    # 3. 记录完整查询参数 (GET)
+    if request.args:
+        logger.info("[%s] Query Params: %s", g.request_id, dict(request.args))
+
+    # 4. 记录完整请求体 (POST/PUT/PATCH)
+    if request.method in ("POST", "PUT", "PATCH"):
+        body = request.get_data(as_text=True)
+        logger.info("[%s] Request Body: %s", g.request_id, body)
+
+
+@app.after_request
+def log_response(response):
+    """请求返回时记录完整出参"""
+    duration_ms = round((time.time() - getattr(g, "start_time", time.time())) * 1000, 2)
+    request_id = getattr(g, "request_id", "unknown")
+
+    # 1. 记录响应状态与耗时
+    logger.info("[%s] <<< Status: %s | Duration: %sms", request_id, response.status_code, duration_ms)
+
+    # 2. 记录完整响应头
+    headers_dict = dict(response.headers)
+    logger.info("[%s] Response Headers: %s", request_id, headers_dict)
+
+    # 3. 记录完整响应体
+    body = response.get_data(as_text=True)
+    logger.info("[%s] Response Body: %s", request_id, body)
+
+    return response
 
 # ==================== 工具函数 ====================
 
