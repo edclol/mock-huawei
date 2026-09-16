@@ -128,7 +128,7 @@ def oauth_token():
             return error_response(12002, "missing required parameter: refresh_token")
         return jsonify({
             "access_token": f"mock_access_token_{uuid.uuid4().hex[:16]}",
-            "expires_in": 3600,
+            "expires_in": 10,
             "refresh_token": f"mock_refresh_token_{uuid.uuid4().hex[:16]}",
             "scope": "openid profile email",
             "token_type": "Bearer",
