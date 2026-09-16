@@ -3,21 +3,13 @@ HMS Core API Mock Server
 模拟华为 HMS Core 相关接口，用于本地开发与测试
 """
 
-from flask import Flask, request, jsonify
-import time
-import uuid
-import random
-import logging
-import time
-import uuid
-from flask import g
-import logging
-import time
-import uuid
-from flask import g
-
-
 import base64
+import logging
+import random
+import time
+import uuid
+
+from flask import Flask, g, jsonify, request
 
 app = Flask(__name__)
 
