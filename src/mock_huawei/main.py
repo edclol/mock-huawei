@@ -18,9 +18,8 @@ from flask import g
 
 
 import base64
+
 app = Flask(__name__)
-
-
 
 
 # ========== 日志配置 ==========
@@ -62,7 +61,12 @@ def log_response(response):
     request_id = getattr(g, "request_id", "unknown")
 
     # 1. 记录响应状态与耗时
-    logger.info("[%s] <<< Status: %s | Duration: %sms", request_id, response.status_code, duration_ms)
+    logger.info(
+        "[%s] <<< Status: %s | Duration: %sms",
+        request_id,
+        response.status_code,
+        duration_ms,
+    )
 
     # 2. 记录完整响应头
     headers_dict = dict(response.headers)
@@ -74,27 +78,23 @@ def log_response(response):
 
     return response
 
+
 # ==================== 工具函数 ====================
+
 
 def success_response(data=None, message="Success"):
     """统一成功响应格式"""
-    return jsonify({
-        "subCode": "0",
-        "subMsg": message,
-        "data": data or {}
-    }), 200
+    return jsonify({"subCode": "0", "subMsg": message, "data": data or {}}), 200
 
 
 def error_response(sub_code, sub_msg, http_status=400):
     """统一错误响应格式"""
-    return jsonify({
-        "subCode": str(sub_code),
-        "subMsg": sub_msg
-    }), http_status
+    return jsonify({"subCode": str(sub_code), "subMsg": sub_msg}), http_status
 
 
 # ==================== 1. Auth Example ====================
 # 参考: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/auth-example-0000001054581058
+
 
 @app.route("/oauth2/v3/token", methods=["POST"])
 def oauth_token():
@@ -102,38 +102,52 @@ def oauth_token():
     模拟 OAuth2 Token 端点
     支持 authorization_code 和 refresh_token 两种 grant_type
     """
-    grant_type = request.form.get("grant_type") or request.json.get("grant_type") if request.is_json else request.form.get("grant_type")
-    client_id = request.form.get("client_id") or (request.json.get("client_id") if request.is_json else None)
+    grant_type = (
+        request.form.get("grant_type") or request.json.get("grant_type")
+        if request.is_json
+        else request.form.get("grant_type")
+    )
+    client_id = request.form.get("client_id") or (
+        request.json.get("client_id") if request.is_json else None
+    )
 
     if not grant_type:
         return error_response(12002, "missing required parameter: grant_type")
 
     if grant_type == "authorization_code":
-        code = request.form.get("code") or (request.json.get("code") if request.is_json else None)
+        code = request.form.get("code") or (
+            request.json.get("code") if request.is_json else None
+        )
         if not code:
             return error_response(12002, "missing required parameter: code")
         # 模拟返回 token
-        return jsonify({
-            "access_token": f"mock_access_token_{uuid.uuid4().hex[:16]}",
-            "expires_in": 3600,
-            "refresh_token": f"mock_refresh_token_{uuid.uuid4().hex[:16]}",
-            "scope": "openid profile email",
-            "token_type": "Bearer",
-            "id_token": f"mock_id_token_{uuid.uuid4().hex[:16]}"
-        }), 200
+        return jsonify(
+            {
+                "access_token": f"mock_access_token_{uuid.uuid4().hex[:16]}",
+                "expires_in": 3600,
+                "refresh_token": f"mock_refresh_token_{uuid.uuid4().hex[:16]}",
+                "scope": "openid profile email",
+                "token_type": "Bearer",
+                "id_token": f"mock_id_token_{uuid.uuid4().hex[:16]}",
+            }
+        ), 200
 
     elif grant_type == "refresh_token":
-        refresh_token = request.form.get("refresh_token") or (request.json.get("refresh_token") if request.is_json else None)
+        refresh_token = request.form.get("refresh_token") or (
+            request.json.get("refresh_token") if request.is_json else None
+        )
         if not refresh_token:
             return error_response(12002, "missing required parameter: refresh_token")
-        return jsonify({
-            "access_token": f"mock_access_token_{uuid.uuid4().hex[:16]}",
-            "expires_in": 10,
-            "refresh_token": f"mock_refresh_token_{uuid.uuid4().hex[:16]}",
-            "scope": "openid profile email",
-            "token_type": "Bearer",
-            "id_token": f"mock_id_token_{uuid.uuid4().hex[:16]}"
-        }), 200
+        return jsonify(
+            {
+                "access_token": f"mock_access_token_{uuid.uuid4().hex[:16]}",
+                "expires_in": 10,
+                "refresh_token": f"mock_refresh_token_{uuid.uuid4().hex[:16]}",
+                "scope": "openid profile email",
+                "token_type": "Bearer",
+                "id_token": f"mock_id_token_{uuid.uuid4().hex[:16]}",
+            }
+        ), 200
 
     else:
         return error_response(12003, f"unsupported grant_type: {grant_type}")
@@ -146,18 +160,21 @@ def userinfo_me():
     if not auth_header.startswith("Bearer "):
         return error_response(12001, "invalid access token", 401)
 
-    return jsonify({
-        "open_id": f"mock_openid_{uuid.uuid4().hex[:24]}",
-        "union_id": f"mock_unionid_{uuid.uuid4().hex[:24]}",
-        "display_name": "MockUser",
-        "email": "mockuser@example.com",
-        "picture": "https://example.com/avatar.png",
-        "locale": "zh-CN"
-    }), 200
+    return jsonify(
+        {
+            "open_id": f"mock_openid_{uuid.uuid4().hex[:24]}",
+            "union_id": f"mock_unionid_{uuid.uuid4().hex[:24]}",
+            "display_name": "MockUser",
+            "email": "mockuser@example.com",
+            "picture": "https://example.com/avatar.png",
+            "locale": "zh-CN",
+        }
+    ), 200
 
 
 # ==================== 2. Get Privacy Records ====================
 # 参考: https://developer.huawei.com/consumer/cn/doc/HMSCore-References/get-privacy-records-0000001058868980
+
 
 @app.route("/healthkit/v1/privacyRecords", methods=["GET"])
 def get_privacy_records():
@@ -179,7 +196,7 @@ def get_privacy_records():
             "grantTime": int(time.time()) - random.randint(3600, 86400),
             "revokeTime": None,
             "status": "GRANTED",
-            "source": "USER_CONSENT"
+            "source": "USER_CONSENT",
         },
         {
             "recordId": str(uuid.uuid4()),
@@ -188,18 +205,16 @@ def get_privacy_records():
             "grantTime": int(time.time()) - random.randint(86400, 172800),
             "revokeTime": int(time.time()) - random.randint(3600, 86400),
             "status": "REVOKED",
-            "source": "USER_CONSENT"
-        }
+            "source": "USER_CONSENT",
+        },
     ]
 
-    return success_response(data={
-        "privacyRecords": records,
-        "totalNum": len(records)
-    })
+    return success_response(data={"privacyRecords": records, "totalNum": len(records)})
 
 
 # ==================== 3. Cancel Scopes ====================
 # 参考: https://developer.huawei.com/consumer/cn/doc/HMSCore-References/cancel-scopes-0000001059462192
+
 
 @app.route("/healthkit/v1/scopes/cancel", methods=["POST"])
 def cancel_scopes():
@@ -226,29 +241,22 @@ def cancel_scopes():
         else:
             failed.append({"scope": scope, "reason": "scope not granted"})
 
-    return success_response(data={
-        "cancelledScopes": cancelled,
-        "failedScopes": failed,
-        "openId": open_id
-    })
-
-
-
+    return success_response(
+        data={"cancelledScopes": cancelled, "failedScopes": failed, "openId": open_id}
+    )
 
 
 # ==============================================================================
 # 通用工具函数
 # ==============================================================================
 
+
 def error_response(http_status, error_code, error_msg):
     """
     构造统一错误响应。
     ⚠️ 歧义#1: 文档未定义错误Body格式，此处采用华为云REST API常见格式。
     """
-    body = {
-        "errorCode": str(error_code),
-        "errorMsg": error_msg
-    }
+    body = {"errorCode": str(error_code), "errorMsg": error_msg}
     resp = jsonify(body)
     resp.status_code = http_status
     resp.headers["Content-Type"] = "application/json; charset=utf-8"
@@ -287,21 +295,66 @@ SAMPLESET_FIELD_CONFIG = {
     },
     "com.huawei.instantaneous.body_weight": {
         "fields": [
-            {"fieldName": "body_weight",          "type": "floatValue",   "min": 50.0,  "max": 90.0},
-            {"fieldName": "bmi",                  "type": "floatValue",   "min": 18.0,  "max": 30.0},
-            {"fieldName": "body_fat",             "type": "floatValue",   "min": 8.0,   "max": 25.0},
-            {"fieldName": "body_fat_rate",        "type": "floatValue",   "min": 10.0,  "max": 35.0},
-            {"fieldName": "muscle_mass",          "type": "floatValue",   "min": 35.0,  "max": 65.0},
-            {"fieldName": "basal_metabolism",     "type": "floatValue",   "min": 1200.0,"max": 2000.0},
-            {"fieldName": "moisture",             "type": "floatValue",   "min": 30.0,  "max": 45.0},
-            {"fieldName": "moisture_rate",        "type": "floatValue",   "min": 45.0,  "max": 65.0},
-            {"fieldName": "visceral_fat_level",   "type": "floatValue",   "min": 5.0,   "max": 15.0},
-            {"fieldName": "bone_salt",            "type": "floatValue",   "min": 2.0,   "max": 4.0},
-            {"fieldName": "protein_rate",         "type": "floatValue",   "min": 14.0,  "max": 22.0},
-            {"fieldName": "body_age",             "type": "integerValue", "min": 18,    "max": 60},
-            {"fieldName": "body_score",           "type": "floatValue",   "min": 50.0,  "max": 95.0},
-            {"fieldName": "skeletal_musclel_mass","type": "floatValue",   "min": 18.0,  "max": 40.0},
-            {"fieldName": "impedance",            "type": "floatValue",   "min": 300.0, "max": 800.0},
+            {
+                "fieldName": "body_weight",
+                "type": "floatValue",
+                "min": 50.0,
+                "max": 90.0,
+            },
+            {"fieldName": "bmi", "type": "floatValue", "min": 18.0, "max": 30.0},
+            {"fieldName": "body_fat", "type": "floatValue", "min": 8.0, "max": 25.0},
+            {
+                "fieldName": "body_fat_rate",
+                "type": "floatValue",
+                "min": 10.0,
+                "max": 35.0,
+            },
+            {
+                "fieldName": "muscle_mass",
+                "type": "floatValue",
+                "min": 35.0,
+                "max": 65.0,
+            },
+            {
+                "fieldName": "basal_metabolism",
+                "type": "floatValue",
+                "min": 1200.0,
+                "max": 2000.0,
+            },
+            {"fieldName": "moisture", "type": "floatValue", "min": 30.0, "max": 45.0},
+            {
+                "fieldName": "moisture_rate",
+                "type": "floatValue",
+                "min": 45.0,
+                "max": 65.0,
+            },
+            {
+                "fieldName": "visceral_fat_level",
+                "type": "floatValue",
+                "min": 5.0,
+                "max": 15.0,
+            },
+            {"fieldName": "bone_salt", "type": "floatValue", "min": 2.0, "max": 4.0},
+            {
+                "fieldName": "protein_rate",
+                "type": "floatValue",
+                "min": 14.0,
+                "max": 22.0,
+            },
+            {"fieldName": "body_age", "type": "integerValue", "min": 18, "max": 60},
+            {"fieldName": "body_score", "type": "floatValue", "min": 50.0, "max": 95.0},
+            {
+                "fieldName": "skeletal_musclel_mass",
+                "type": "floatValue",
+                "min": 18.0,
+                "max": 40.0,
+            },
+            {
+                "fieldName": "impedance",
+                "type": "floatValue",
+                "min": 300.0,
+                "max": 800.0,
+            },
         ],
         "is_continuous": False,
         "num_points": (1, 1),
@@ -315,8 +368,8 @@ SAMPLESET_FIELD_CONFIG = {
     },
     "com.huawei.instantaneous.blood_glucose": {
         "fields": [
-            {"fieldName": "level",        "type": "floatValue",   "min": 3.5, "max": 12.0},
-            {"fieldName": "measure_time", "type": "integerValue", "min": 1,   "max": 9},
+            {"fieldName": "level", "type": "floatValue", "min": 3.5, "max": 12.0},
+            {"fieldName": "measure_time", "type": "integerValue", "min": 1, "max": 9},
         ],
         "is_continuous": False,
         "num_points": (1, 2),
@@ -325,11 +378,30 @@ SAMPLESET_FIELD_CONFIG = {
     },
     "com.huawei.instantaneous.blood_pressure": {
         "fields": [
-            {"fieldName": "systolic_pressure",        "type": "floatValue",   "min": 90.0,  "max": 160.0},
-            {"fieldName": "diastolic_pressure",       "type": "floatValue",   "min": 55.0,  "max": 100.0},
-            {"fieldName": "sphygmus",                 "type": "floatValue",   "min": 55.0,  "max": 100.0},
-            {"fieldName": "measurement_anomaly_flag", "type": "integerValue", "min": 1,     "max": 4},
-            {"fieldName": "before_measure_activities","type": "stringValue",  "values": ["[6]", "[1,10]", "[3]", "[1,2]"]},
+            {
+                "fieldName": "systolic_pressure",
+                "type": "floatValue",
+                "min": 90.0,
+                "max": 160.0,
+            },
+            {
+                "fieldName": "diastolic_pressure",
+                "type": "floatValue",
+                "min": 55.0,
+                "max": 100.0,
+            },
+            {"fieldName": "sphygmus", "type": "floatValue", "min": 55.0, "max": 100.0},
+            {
+                "fieldName": "measurement_anomaly_flag",
+                "type": "integerValue",
+                "min": 1,
+                "max": 4,
+            },
+            {
+                "fieldName": "before_measure_activities",
+                "type": "stringValue",
+                "values": ["[6]", "[1,10]", "[3]", "[1,2]"],
+            },
         ],
         "is_continuous": False,
         "num_points": (1, 2),
@@ -340,42 +412,110 @@ SAMPLESET_FIELD_CONFIG = {
 HEALTHRECORDS_CONFIG = {
     "com.huawei.health.record.sleep": {
         "fields": [
-            {"fieldName": "fall_asleep_time",    "type": "longValue",    "derived": "start_ms"},
-            {"fieldName": "wakeup_time",         "type": "longValue",    "derived": "end_ms"},
-            {"fieldName": "all_sleep_time",      "type": "integerValue", "min": 180, "max": 540},
-            {"fieldName": "light_sleep_time",    "type": "integerValue", "min": 100, "max": 280},
-            {"fieldName": "deep_sleep_time",     "type": "integerValue", "min": 60,  "max": 180},
-            {"fieldName": "dream_time",          "type": "integerValue", "min": 40,  "max": 120},
-            {"fieldName": "awake_time",          "type": "integerValue", "min": 10,  "max": 60},
-            {"fieldName": "wakeup_count",        "type": "integerValue", "min": 0,   "max": 5},
-            {"fieldName": "deep_sleep_part",     "type": "integerValue", "min": 60,  "max": 100},
-            {"fieldName": "sleep_score",         "type": "integerValue", "min": 60,  "max": 98},
-            {"fieldName": "go_bed_time",         "type": "longValue",    "derived": "start_ms_minus_20min"},
-            {"fieldName": "prepare_sleep_time",  "type": "longValue",    "derived": "start_ms_minus_10min"},
-            {"fieldName": "off_bed_time",        "type": "longValue",    "derived": "start_ms_minus_5min"},
-            {"fieldName": "sleep_type",          "type": "integerValue", "min": 1,   "max": 1},  # 默认科学睡眠
+            {
+                "fieldName": "fall_asleep_time",
+                "type": "longValue",
+                "derived": "start_ms",
+            },
+            {"fieldName": "wakeup_time", "type": "longValue", "derived": "end_ms"},
+            {
+                "fieldName": "all_sleep_time",
+                "type": "integerValue",
+                "min": 180,
+                "max": 540,
+            },
+            {
+                "fieldName": "light_sleep_time",
+                "type": "integerValue",
+                "min": 100,
+                "max": 280,
+            },
+            {
+                "fieldName": "deep_sleep_time",
+                "type": "integerValue",
+                "min": 60,
+                "max": 180,
+            },
+            {"fieldName": "dream_time", "type": "integerValue", "min": 40, "max": 120},
+            {"fieldName": "awake_time", "type": "integerValue", "min": 10, "max": 60},
+            {"fieldName": "wakeup_count", "type": "integerValue", "min": 0, "max": 5},
+            {
+                "fieldName": "deep_sleep_part",
+                "type": "integerValue",
+                "min": 60,
+                "max": 100,
+            },
+            {"fieldName": "sleep_score", "type": "integerValue", "min": 60, "max": 98},
+            {
+                "fieldName": "go_bed_time",
+                "type": "longValue",
+                "derived": "start_ms_minus_20min",
+            },
+            {
+                "fieldName": "prepare_sleep_time",
+                "type": "longValue",
+                "derived": "start_ms_minus_10min",
+            },
+            {
+                "fieldName": "off_bed_time",
+                "type": "longValue",
+                "derived": "start_ms_minus_5min",
+            },
+            {
+                "fieldName": "sleep_type",
+                "type": "integerValue",
+                "min": 1,
+                "max": 1,
+            },  # 默认科学睡眠
         ],
         "sub_data_types": {
             "com.huawei.continuous.sleep.fragment": {
                 "fields": [
-                    {"fieldName": "sleep_state", "type": "integerValue", "values": [1, 3, 4, 2, 1]},
+                    {
+                        "fieldName": "sleep_state",
+                        "type": "integerValue",
+                        "values": [1, 3, 4, 2, 1],
+                    },
                 ],
             },
             "com.huawei.sleep.on_off_bed_record": {
                 "fields": [
-                    {"fieldName": "onOffBedState", "type": "integerValue", "values": [1, 2, 1, 2]},
+                    {
+                        "fieldName": "onOffBedState",
+                        "type": "integerValue",
+                        "values": [1, 2, 1, 2],
+                    },
                 ],
             },
         },
     },
     "com.huawei.continuous.ecg_record": {
         "fields": [
-            {"fieldName": "ecg_type",                "type": "integerValue", "min": 1,    "max": 1},
-            {"fieldName": "avg_heart_rate",          "type": "floatValue",   "min": 60.0, "max": 90.0},
-            {"fieldName": "ecg_arrhythmia_type",     "type": "longValue",    "min": 0,    "max": 0},
-            {"fieldName": "user_symptom",            "type": "longValue",    "min": 0,    "max": 0},
-            {"fieldName": "sampling_frequency",      "type": "integerValue", "min": 0,    "max": 0},
-            {"fieldName": "ecg_algorithm_version",   "type": "stringValue",  "fixed": "1.0"},
+            {"fieldName": "ecg_type", "type": "integerValue", "min": 1, "max": 1},
+            {
+                "fieldName": "avg_heart_rate",
+                "type": "floatValue",
+                "min": 60.0,
+                "max": 90.0,
+            },
+            {
+                "fieldName": "ecg_arrhythmia_type",
+                "type": "longValue",
+                "min": 0,
+                "max": 0,
+            },
+            {"fieldName": "user_symptom", "type": "longValue", "min": 0, "max": 0},
+            {
+                "fieldName": "sampling_frequency",
+                "type": "integerValue",
+                "min": 0,
+                "max": 0,
+            },
+            {
+                "fieldName": "ecg_algorithm_version",
+                "type": "stringValue",
+                "fixed": "1.0",
+            },
         ],
         "sub_data_relation": [
             {
@@ -397,6 +537,7 @@ EARLIEST_MS = 1388505600000
 # 接口一: POST /healthkit/v2/sampleSet:polymerize
 # ==============================================================================
 
+
 @app.route("/healthkit/v2/sampleSet:polymerize", methods=["POST"])
 def sampleset_polymerize():
     """
@@ -408,37 +549,57 @@ def sampleset_polymerize():
     if body is None:
         return error_response(400, "SC_BAD_REQUEST", "Request body must be valid JSON")
 
-    start_time = body.get("startTime")       # Long, 可选, 毫秒
-    end_time = body.get("endTime")           # Long, 必选, 毫秒
+    start_time = body.get("startTime")  # Long, 可选, 毫秒
+    end_time = body.get("endTime")  # Long, 必选, 毫秒
     polymerize_with = body.get("polymerizeWith")  # List, 必选
 
     # ---------- 参数校验 ----------
     if end_time is None:
         return error_response(400, "12002", "missing required parameter: endTime")
 
-    if polymerize_with is None or not isinstance(polymerize_with, list) or len(polymerize_with) == 0:
-        return error_response(400, "12002", "missing required parameter: polymerizeWith")
+    if (
+        polymerize_with is None
+        or not isinstance(polymerize_with, list)
+        or len(polymerize_with) == 0
+    ):
+        return error_response(
+            400, "12002", "missing required parameter: polymerizeWith"
+        )
 
     if len(polymerize_with) > 20:
-        return error_response(400, "12003", "polymerizeWith list exceeds maximum size of 20")
+        return error_response(
+            400, "12003", "polymerizeWith list exceeds maximum size of 20"
+        )
 
     # ⚠️ 歧义#3: startTime 可选，但约束要求 endTime > startTime
     if start_time is not None:
         if not isinstance(start_time, (int, float)):
-            return error_response(400, "12003", "startTime must be a numeric value (milliseconds)")
+            return error_response(
+                400, "12003", "startTime must be a numeric value (milliseconds)"
+            )
         if start_time < EARLIEST_MS:
-            return error_response(400, "12003", f"startTime must not be earlier than {EARLIEST_MS} (2014-01-01)")
+            return error_response(
+                400,
+                "12003",
+                f"startTime must not be earlier than {EARLIEST_MS} (2014-01-01)",
+            )
         if end_time <= start_time:
-            return error_response(400, "12003", "endTime must be greater than startTime")
+            return error_response(
+                400, "12003", "endTime must be greater than startTime"
+            )
         if (end_time - start_time) > THIRTY_DAYS_MS:
             return error_response(400, "12003", "time interval exceeds 30 days")
 
     if not isinstance(end_time, (int, float)):
-        return error_response(400, "12003", "endTime must be a numeric value (milliseconds)")
+        return error_response(
+            400, "12003", "endTime must be a numeric value (milliseconds)"
+        )
 
     # ---------- 生成模拟数据 ----------
     # 如果 startTime 未提供，默认取 endTime 前24小时
-    effective_start = start_time if start_time is not None else (end_time - 24 * 3600 * 1000)
+    effective_start = (
+        start_time if start_time is not None else (end_time - 24 * 3600 * 1000)
+    )
 
     groups = []
     for pw in polymerize_with:
@@ -447,8 +608,11 @@ def sampleset_polymerize():
 
         # 至少需要一个聚合标识
         if not data_type_name and not data_collector_id_query:
-            return error_response(400, "12003",
-                "each polymerizeWith item must have at least dataTypeName or dataCollectorId")
+            return error_response(
+                400,
+                "12003",
+                "each polymerizeWith item must have at least dataTypeName or dataCollectorId",
+            )
 
         # 如果未指定 dataTypeName，从 dataCollectorId 推断 (Mock: 默认步数)
         if not data_type_name:
@@ -458,7 +622,14 @@ def sampleset_polymerize():
         if config is None:
             # ⚠️ 歧义#5 类似处理: 未知数据类型返回空采样点而非报错
             config = {
-                "fields": [{"fieldName": "unknown_field", "type": "integerValue", "min": 0, "max": 0}],
+                "fields": [
+                    {
+                        "fieldName": "unknown_field",
+                        "type": "integerValue",
+                        "min": 0,
+                        "max": 0,
+                    }
+                ],
                 "is_continuous": False,
                 "num_points": (1, 1),
             }
@@ -475,7 +646,9 @@ def sampleset_polymerize():
 
             if config["is_continuous"]:
                 # 连续型: endTime > startTime (1~10 分钟跨度)
-                pt_end_ns = pt_start_ns + random.randint(60_000_000_000, 600_000_000_000)
+                pt_end_ns = pt_start_ns + random.randint(
+                    60_000_000_000, 600_000_000_000
+                )
             else:
                 # 瞬时型: endTime == startTime
                 pt_end_ns = pt_start_ns
@@ -485,11 +658,17 @@ def sampleset_polymerize():
             for field_def in config["fields"]:
                 val_obj = {"fieldName": field_def["fieldName"]}
                 if field_def["type"] == "floatValue":
-                    val_obj["floatValue"] = round(random.uniform(field_def["min"], field_def["max"]), 1)
+                    val_obj["floatValue"] = round(
+                        random.uniform(field_def["min"], field_def["max"]), 1
+                    )
                 elif field_def["type"] == "integerValue":
-                    val_obj["integerValue"] = random.randint(field_def["min"], field_def["max"])
+                    val_obj["integerValue"] = random.randint(
+                        field_def["min"], field_def["max"]
+                    )
                 elif field_def["type"] == "longValue":
-                    val_obj["longValue"] = random.randint(field_def["min"], field_def["max"])
+                    val_obj["longValue"] = random.randint(
+                        field_def["min"], field_def["max"]
+                    )
                 elif field_def["type"] == "stringValue":
                     if "fixed" in field_def:
                         val_obj["stringValue"] = field_def["fixed"]
@@ -503,7 +682,9 @@ def sampleset_polymerize():
                 "startTime": pt_start_ns,
                 "endTime": pt_end_ns,
                 "dataTypeName": data_type_name,
-                "originalDataCollectorId": make_original_data_collector_id(data_type_name),
+                "originalDataCollectorId": make_original_data_collector_id(
+                    data_type_name
+                ),
                 "value": values,
             }
 
@@ -539,6 +720,7 @@ def sampleset_polymerize():
 # 接口二: GET /healthkit/v2/healthRecords
 # ==============================================================================
 
+
 @app.route("/healthkit/v2/healthRecords", methods=["GET"])
 def health_records():
     """
@@ -546,9 +728,9 @@ def health_records():
     文档: healthRecords GET 接口
     """
     # ---------- 解析查询参数 ----------
-    start_time_str = request.args.get("startTime")     # Long, 必选, 纳秒
-    end_time_str = request.args.get("endTime")         # Long, 必选, 纳秒
-    data_type = request.args.get("dataType")           # String, 必选
+    start_time_str = request.args.get("startTime")  # Long, 必选, 纳秒
+    end_time_str = request.args.get("endTime")  # Long, 必选, 纳秒
+    data_type = request.args.get("dataType")  # String, 必选
 
     # ⚠️ 歧义#2: subDataType 多值 — 同时支持重复参数和逗号分隔
     sub_data_types = request.args.getlist("subDataType")
@@ -569,7 +751,9 @@ def health_records():
         start_time_ns = int(start_time_str)
         end_time_ns = int(end_time_str)
     except (ValueError, TypeError):
-        return error_response(400, "12003", "startTime and endTime must be valid integers (nanoseconds)")
+        return error_response(
+            400, "12003", "startTime and endTime must be valid integers (nanoseconds)"
+        )
 
     if end_time_ns <= start_time_ns:
         return error_response(400, "12003", "endTime must be greater than startTime")
@@ -606,7 +790,9 @@ def health_records():
         elif derived == "start_ms_minus_5min":
             val_obj["longValue"] = start_ms - 5 * 60 * 1000
         elif field_def["type"] == "floatValue":
-            val_obj["floatValue"] = round(random.uniform(field_def["min"], field_def["max"]), 1)
+            val_obj["floatValue"] = round(
+                random.uniform(field_def["min"], field_def["max"]), 1
+            )
         elif field_def["type"] == "integerValue":
             val_obj["integerValue"] = random.randint(field_def["min"], field_def["max"])
         elif field_def["type"] == "longValue":
@@ -649,17 +835,23 @@ def health_records():
                 for field_def in sdt_config["fields"]:
                     val_obj = {"fieldName": field_def["fieldName"]}
                     if "values" in field_def:
-                        val_obj[field_def["type"]] = field_def["values"][idx % len(field_def["values"])]
+                        val_obj[field_def["type"]] = field_def["values"][
+                            idx % len(field_def["values"])
+                        ]
                     elif field_def["type"] == "integerValue":
-                        val_obj["integerValue"] = random.randint(field_def["min"], field_def["max"])
+                        val_obj["integerValue"] = random.randint(
+                            field_def["min"], field_def["max"]
+                        )
                     sp_values.append(val_obj)
 
-                sub_sample_points.append({
-                    "startTime": frag_start,
-                    "endTime": frag_end,
-                    "dataTypeName": sdt,
-                    "value": sp_values,
-                })
+                sub_sample_points.append(
+                    {
+                        "startTime": frag_start,
+                        "endTime": frag_end,
+                        "dataTypeName": sdt,
+                        "value": sp_values,
+                    }
+                )
 
             sub_data[sdt] = {
                 "startTime": start_time_ns,
@@ -676,12 +868,16 @@ def health_records():
     if sub_data_relation:
         relations = []
         for rel in sub_data_relation:
-            relations.append({
-                "startTime": start_time_ns,
-                "endTime": end_time_ns,
-                "dataTypeName": rel["dataTypeName"],
-                "dataCollectorId": make_data_collector_id(rel["dataTypeName"], prefix="raw"),
-            })
+            relations.append(
+                {
+                    "startTime": start_time_ns,
+                    "endTime": end_time_ns,
+                    "dataTypeName": rel["dataTypeName"],
+                    "dataCollectorId": make_data_collector_id(
+                        rel["dataTypeName"], prefix="raw"
+                    ),
+                }
+            )
         record["subDataRelation"] = relations
 
     # ---------- 构造响应 ----------
@@ -695,6 +891,7 @@ def health_records():
 # 健康检查 & 404 兜底
 # ==============================================================================
 
+
 @app.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "ok", "service": "Health Service Kit Mock"})
@@ -702,7 +899,9 @@ def health_check():
 
 @app.errorhandler(404)
 def not_found(e):
-    return error_response(404, "SC_NOT_FOUND", "Service not found. Please check the request URI.")
+    return error_response(
+        404, "SC_NOT_FOUND", "Service not found. Please check the request URI."
+    )
 
 
 @app.errorhandler(405)
@@ -710,9 +909,8 @@ def method_not_allowed(e):
     return error_response(405, "SC_METHOD_NOT_ALLOWED", "HTTP Method not allowed.")
 
 
-
-
 # ==================== 健康检查 & 路由索引 ====================
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -720,16 +918,20 @@ def index():
     routes = []
     for rule in app.url_map.iter_rules():
         if rule.endpoint != "static" and rule.endpoint != "index":
-            routes.append({
-                "path": rule.rule,
-                "methods": list(rule.methods - {"OPTIONS", "HEAD"}),
-                "endpoint": rule.endpoint
-            })
-    return jsonify({
-        "service": "HMS Core Mock API Server",
-        "version": "1.0.0",
-        "endpoints": sorted(routes, key=lambda x: x["path"])
-    })
+            routes.append(
+                {
+                    "path": rule.rule,
+                    "methods": list(rule.methods - {"OPTIONS", "HEAD"}),
+                    "endpoint": rule.endpoint,
+                }
+            )
+    return jsonify(
+        {
+            "service": "HMS Core Mock API Server",
+            "version": "1.0.0",
+            "endpoints": sorted(routes, key=lambda x: x["path"]),
+        }
+    )
 
 
 if __name__ == "__main__":
