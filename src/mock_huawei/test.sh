@@ -35,7 +35,7 @@ curl -X POST http://localhost:5000/healthkit/v2/sampleSet:polymerize \
     "startTime": 1789027200000,
     "endTime": 1789113600000
   }' | python3 -m json.tool
-
+https://test-patient.caetar.com/chronic/health/device?code=EQEEADl7RehRoWbnZ0o3S9BwWvApoLk8KnKLK1cXgyLVmXwNhU4aLaTuwNXGjK87PcPHg2jyH41EDuvm6%2BbA03%2Bq84%2FoTtoJFwx%2FAr8zZmHJX17Y9IPZi04ZLQFVqWq1BJh1sWrId0wHipLfGxSEC6KhgxYUxybhFmIcotP%2FZx4r%2F3H56KET7wBYxxQ1s1JjI9voRUj4xKt8zBhvoSNqUYqkxEhbPZQvDjx13xahzWH27dLavhBP54IQrBUwntK5NEPydyX52PE67hHckMyvikiqYb%2BmoBgvxaFV&state=42a0d62245b74907accc23b6db8cc61d
 
 # ─── 示例4: 查询血糖采样明细 ───
 curl -X POST http://localhost:5000/healthkit/v2/sampleSet:polymerize \
